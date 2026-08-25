@@ -1,0 +1,21 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.misanthropy.fastjei.gen1.mixin",
+  "plugin": "com.misanthropy.fastjei.mixin.Gen1MixinPlugin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "fastjei.gen1.refmap.json",
+  "mixins": [],
+  "client": [
+    "AnvilRecipeMixins$SkipGeneratedEnchantments",
+    "AnvilRecipeMixins$SkipGeneratedRepairs",
+    "ElementSearchMixin",
+    "IngredientFilterMixin",
+    "RecipeGuiLogicMixin",
+    "SafeIngredientUtilAccessor",
+    "VanillaPluginTimingMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

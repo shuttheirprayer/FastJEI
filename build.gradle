@@ -1,0 +1,209 @@
+buildscript {
+    repositories {
+        maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
+    }
+}
+
+plugins {
+    id 'eclipse'
+    id 'idea'
+    id 'net.minecraftforge.gradle' version '[6.0.16,6.2)'
+}
+
+apply plugin: 'org.spongepowered.mixin'
+
+group = mod_group_id
+version = mod_version
+
+base {
+    archivesName = mod_id
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(17)
+}
+
+minecraft {
+
+    mappings channel: mapping_channel, version: mapping_version
+    copyIdeResources = true
+    runs {
+        configureEach {
+            workingDirectory project.file('run')
+
+            property 'forge.logging.markers', 'REGISTRIES'
+
+
+            property 'forge.logging.console.level', 'debug'
+
+            mods {
+                "${mod_id}" {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        client {
+            property 'forge.enabledGameTestNamespaces', mod_id
+        }
+
+        server {
+            property 'forge.enabledGameTestNamespaces', mod_id
+            args '--nogui'
+        }
+
+        gameTestServer {
+            property 'forge.enabledGameTestNamespaces', mod_id
+        }
+
+        data {
+            workingDirectory project.file('run-data')
+
+            args '--mod', mod_id, '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
+        }
+    }
+}
+
+def jeiGenerations = [gen1: jei_gen1_version, gen2: jei_gen2_version, gen3: jei_gen3_version]
+
+sourceSets {
+    jeiGenerations.keySet().each { name -> maybeCreate(name) }
+}
+
+jeiGenerations.keySet().each { name ->
+    sourceSets.named(name) {
+        compileClasspath += sourceSets.main.compileClasspath + sourceSets.main.output
+    }
+}
+
+mixin {
+    add sourceSets.main, "${mod_id}.refmap.json"
+
+    jeiGenerations.keySet().each { name ->
+        add sourceSets.named(name).get(), "${mod_id}.${name}.refmap.json"
+        config "${mod_id}.${name}.mixins.json"
+    }
+}
+
+// A variant whose mixins are all remap = false gives the annotation processor nothing to
+// map, so it writes no refmap at all, and an up-to-date compile can drop one that an
+// earlier run did write. Either way the mixin config still names the file. Guarantee an
+// empty one exists so every build produces the same jar.
+def ensureGenerationRefmaps = tasks.register('ensureGenerationRefmaps') {
+    outputs.upToDateWhen { false }
+    jeiGenerations.keySet().each { name ->
+        dependsOn tasks.named("compile${name.capitalize()}Java")
+    }
+    doLast {
+        jeiGenerations.keySet().each { name ->
+            def dir = tasks.named("compile${name.capitalize()}Java", JavaCompile).get().temporaryDir
+            def refmap = new File(dir, "${mod_id}.${name}.refmap.json")
+            if (!refmap.exists()) {
+                refmap.parentFile.mkdirs()
+                refmap.text = '{"mappings":{},"data":{}}'
+                logger.lifecycle("Wrote an empty ${refmap.name}: this variant has nothing to remap")
+            }
+        }
+    }
+}
+
+['jar', 'jarJar'].each { taskName ->
+    tasks.named(taskName, Jar).configure {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        dependsOn ensureGenerationRefmaps
+        jeiGenerations.keySet().each { name ->
+            def compileTask = tasks.named("compile${name.capitalize()}Java", JavaCompile)
+            dependsOn compileTask
+            from sourceSets.named(name).get().output
+            from(compileTask.map { it.temporaryDir }) {
+                include "${mod_id}.${name}.refmap.json"
+            }
+        }
+    }
+}
+
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+repositories {
+    maven {
+        name = 'Jared'
+        url = 'https://maven.blamejared.com/'
+        content {
+            includeGroup 'mezz.jei'
+        }
+    }
+    flatDir {
+        dir 'libs'
+    }
+}
+
+dependencies {
+    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+
+    compileOnly(annotationProcessor("io.github.llamalad7:mixinextras-common:0.5.4"))
+    implementation(jarJar("io.github.llamalad7:mixinextras-forge:0.5.4")) {
+        jarJar.ranged(it, "[0.5.4,)")
+    }
+
+    implementation("org.apache.commons:commons-compress:1.28.0")
+    implementation 'commons-io:commons-io:2.15.1'
+    implementation 'org.apache.logging.log4j:log4j-core:2.25.4'
+    implementation 'org.apache.commons:commons-lang3:3.18.0'
+    implementation 'org.codehaus.plexus:plexus-utils:4.0.3'
+    implementation 'io.netty:netty-common:4.1.118.Final'
+    implementation("io.netty:netty-handler:4.2.12.Final")
+    implementation 'io.netty:netty-codec:4.1.125.Final'
+    implementation 'com.google.guava:guava:33.0.0-jre'
+
+    runtimeOnly fg.deobf("mezz.jei:jei-1.20.1-forge:${jei_gen3_version}")
+    gen3CompileOnly fg.deobf("mezz.jei:jei-1.20.1-forge:${jei_gen3_version}")
+
+    gen1CompileOnly "mezz.jei:jei-1.20.1-forge:${jei_gen1_version}"
+    gen2CompileOnly "mezz.jei:jei-1.20.1-forge:${jei_gen2_version}"
+
+    jeiGenerations.keySet().each { name ->
+        add("${name}CompileOnly", "io.github.llamalad7:mixinextras-common:0.5.4")
+        add("${name}AnnotationProcessor", "io.github.llamalad7:mixinextras-common:0.5.4")
+        add("${name}AnnotationProcessor", 'org.spongepowered:mixin:0.8.7:processor')
+    }
+
+
+    annotationProcessor 'org.spongepowered:mixin:0.8.7:processor'
+
+}
+
+tasks.named('processResources', ProcessResources).configure {
+    var replaceProperties = [minecraft_version   : minecraft_version, minecraft_version_range: minecraft_version_range,
+                             forge_version       : forge_version, forge_version_range: forge_version_range,
+                             loader_version_range: loader_version_range, jei_version_range: jei_version_range,
+                             mod_id              : mod_id, mod_name: mod_name, mod_license: mod_license, mod_version: mod_version,
+                             mod_authors         : mod_authors, mod_description: mod_description,]
+
+    inputs.properties replaceProperties
+
+    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
+        expand replaceProperties + [project: project]
+    }
+}
+
+tasks.named('jar', Jar).configure {
+    manifest {
+        attributes(["Specification-Title"     : mod_id,
+                    "Specification-Vendor"    : mod_authors,
+                    "Specification-Version"   : "1",
+                    "Implementation-Title"    : project.name,
+                    "Implementation-Version"  : project.jar.archiveVersion,
+                    "Implementation-Vendor"   : mod_authors,
+                    "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")])
+    }
+
+    finalizedBy 'reobfJar'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}

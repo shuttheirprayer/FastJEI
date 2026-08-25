@@ -1,0 +1,26 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.misanthropy.fastjei.gen3.mixin",
+  "plugin": "com.misanthropy.fastjei.mixin.Gen3MixinPlugin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "fastjei.gen3.refmap.json",
+  "mixins": [],
+  "client": [
+    "AnvilRecipeMixins$QuietAnvilFill",
+    "AnvilRecipeMixins$SkipGeneratedEnchantments",
+    "AnvilRecipeMixins$SkipGeneratedRepairs",
+    "AnvilRecipeMixins$SkipSuppressedSlotUpdates",
+    "BrewingRecipeMakerCommonMixin",
+    "ElementSearchMixin",
+    "GrindstoneRecipeMixins$QuietGrindstoneFill",
+    "GrindstoneRecipeMixins$SkipGeneratedDisenchanting",
+    "GrindstoneRecipeMixins$SkipGeneratedRepairs",
+    "GrindstoneRecipeMixins$SkipSuppressedSlotUpdates",
+    "SafeIngredientUtilAccessor",
+    "VanillaPluginTimingMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
