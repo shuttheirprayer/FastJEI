@@ -23,7 +23,7 @@ import java.util.stream.IntStream;
 public final class SearchIndexBuilder {
 	private SearchIndexBuilder() {}
 
-	private static final char TOOLTIP_PREFIX = '#';
+	private static final String TOOLTIP_PREFIX_ID = "tooltip";
 
 	public static List<PrefixedSearchable<IListElementInfo<?>, IListElement<?>>> build(
 			List<PrefixInfo<IListElementInfo<?>, IListElement<?>>> prefixInfos,
@@ -38,7 +38,8 @@ public final class SearchIndexBuilder {
 			builders.add(prefixInfo.createStorageBuilder());
 		}
 
-		boolean parallelTooltips = parallel && FastJeiConfig.PARALLEL_TOOLTIPS && Fastjei.concurrentSafetySetsInstalled;
+		boolean parallelTooltips = parallel && FastJeiConfig.PARALLEL_TOOLTIPS && Fastjei.concurrentSafetySetsInstalled
+				&& prefixInfos.stream().anyMatch(SearchIndexBuilder::isTooltipPrefix);
 		ISearchStorage<IListElement<?>>[] storages = newStorageArray(count);
 
 		if (parallel) {
@@ -84,6 +85,10 @@ public final class SearchIndexBuilder {
 		return searchables;
 	}
 
+	private static boolean isTooltipPrefix(PrefixInfo<IListElementInfo<?>, IListElement<?>> prefixInfo) {
+		return prefixInfo.toString().contains(TOOLTIP_PREFIX_ID);
+	}
+
 	@SuppressWarnings("unchecked")
 	private static ISearchStorage<IListElement<?>>[] newStorageArray(int size) {
 		return new ISearchStorage[size];
@@ -96,7 +101,7 @@ public final class SearchIndexBuilder {
 			boolean parallelTooltips
 	) {
 		if (prefixInfo.getMode() != SearchMode.DISABLED) {
-			if (parallelTooltips && prefixInfo.getPrefix() == TOOLTIP_PREFIX) {
+			if (parallelTooltips && isTooltipPrefix(prefixInfo)) {
 				fillTokenizedInParallel(prefixInfo, builder, infos);
 			} else {
 				fillSequentially(prefixInfo, builder, infos);
