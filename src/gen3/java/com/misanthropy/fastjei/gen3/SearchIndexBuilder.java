@@ -2,6 +2,7 @@ package com.misanthropy.fastjei.gen3;
 
 import com.misanthropy.fastjei.FastJeiConfig;
 import com.misanthropy.fastjei.Fastjei;
+import com.misanthropy.fastjei.TooltipWarmup;
 import com.misanthropy.fastjei.WorkerPool;
 import mezz.jei.api.search.ISearchStorage;
 import mezz.jei.api.search.ISearchStorageBuilder;
@@ -40,6 +41,9 @@ public final class SearchIndexBuilder {
 
 		boolean parallelTooltips = parallel && FastJeiConfig.PARALLEL_TOOLTIPS && Fastjei.concurrentSafetySetsInstalled
 				&& prefixInfos.stream().anyMatch(SearchIndexBuilder::isTooltipPrefix);
+		if (parallelTooltips) {
+			TooltipWarmup.run();
+		}
 		ISearchStorage<IListElement<?>>[] storages = newStorageArray(count);
 
 		if (parallel) {

@@ -2,6 +2,7 @@ package com.misanthropy.fastjei.gen1.mixin;
 
 import com.misanthropy.fastjei.FastJeiConfig;
 import com.misanthropy.fastjei.Fastjei;
+import com.misanthropy.fastjei.TooltipWarmup;
 import com.misanthropy.fastjei.WorkerPool;
 import mezz.jei.api.ingredients.IIngredientHelper;
 import mezz.jei.api.ingredients.ITypedIngredient;
@@ -80,6 +81,9 @@ public abstract class ElementSearchMixin {
 			}
 		}
 
+		if (parallelTooltips) {
+			TooltipWarmup.run();
+		}
 		ForkJoinTask<?> background = WorkerPool.get().submit(() ->
 				pooled.parallelStream().forEach(entry -> fastjei$fillPrefix(entry.getKey(), infos, entry.getValue()))
 		);
