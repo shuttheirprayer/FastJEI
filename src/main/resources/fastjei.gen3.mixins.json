@@ -18,6 +18,7 @@
     "GrindstoneRecipeMixins$SkipGeneratedRepairs",
     "GrindstoneRecipeMixins$SkipSuppressedSlotUpdates",
     "SafeIngredientUtilAccessor",
+    "TypedItemStackMixin",
     "VanillaPluginTimingMixin"
   ],
   "injectors": {

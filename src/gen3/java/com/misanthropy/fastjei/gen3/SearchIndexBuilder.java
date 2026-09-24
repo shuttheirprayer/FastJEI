@@ -8,10 +8,10 @@ import mezz.jei.api.search.ISearchStorage;
 import mezz.jei.api.search.ISearchStorageBuilder;
 import mezz.jei.common.search.PrefixInfo;
 import mezz.jei.common.search.PrefixedSearchable;
-import mezz.jei.common.search.SearchMode;
 import mezz.jei.gui.ingredients.IListElement;
 import mezz.jei.gui.ingredients.IListElementInfo;
 
+import java.lang.reflect.Method;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -25,6 +25,16 @@ public final class SearchIndexBuilder {
 	private SearchIndexBuilder() {}
 
 	private static final String TOOLTIP_PREFIX_ID = "tooltip";
+
+	private static final Method GET_MODE;
+
+	static {
+		try {
+			GET_MODE = PrefixInfo.class.getMethod("getMode");
+		} catch (NoSuchMethodException e) {
+			throw new IllegalStateException("[FastJEI] PrefixInfo.getMode is missing in this JEI build", e);
+		}
+	}
 
 	public static List<PrefixedSearchable<IListElementInfo<?>, IListElement<?>>> build(
 			List<PrefixInfo<IListElementInfo<?>, IListElement<?>>> prefixInfos,
@@ -93,6 +103,14 @@ public final class SearchIndexBuilder {
 		return prefixInfo.toString().contains(TOOLTIP_PREFIX_ID);
 	}
 
+	private static boolean isDisabled(PrefixInfo<IListElementInfo<?>, IListElement<?>> prefixInfo) {
+		try {
+			return "DISABLED".equals(((Enum<?>) GET_MODE.invoke(prefixInfo)).name());
+		} catch (ReflectiveOperationException e) {
+			throw new IllegalStateException("[FastJEI] Could not read the search mode of " + prefixInfo, e);
+		}
+	}
+
 	@SuppressWarnings("unchecked")
 	private static ISearchStorage<IListElement<?>>[] newStorageArray(int size) {
 		return new ISearchStorage[size];
@@ -104,7 +122,7 @@ public final class SearchIndexBuilder {
 			Collection<IListElementInfo<?>> infos,
 			boolean parallelTooltips
 	) {
-		if (prefixInfo.getMode() != SearchMode.DISABLED) {
+		if (!isDisabled(prefixInfo)) {
 			if (parallelTooltips && isTooltipPrefix(prefixInfo)) {
 				fillTokenizedInParallel(prefixInfo, builder, infos);
 			} else {

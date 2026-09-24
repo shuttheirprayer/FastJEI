@@ -17,7 +17,8 @@ public final class Gen3Support implements JeiCompat {
 				"mezz.jei.library.plugins.vanilla.VanillaPlugin",
 				"mezz.jei.forge.platform.RecipeHelper",
 				"mezz.jei.library.plugins.vanilla.anvil.AnvilRecipeMaker",
-				"mezz.jei.library.plugins.vanilla.grindstone.GrindstoneRecipeMaker"
+				"mezz.jei.library.plugins.vanilla.grindstone.GrindstoneRecipeMaker",
+				"mezz.jei.common.ingredients.itemStacks.TypedItemStack"
 		};
 	}
 
