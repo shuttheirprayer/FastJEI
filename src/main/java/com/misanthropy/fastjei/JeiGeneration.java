@@ -9,6 +9,7 @@ public enum JeiGeneration {
 	GEN1("com.misanthropy.fastjei.gen1.Gen1Support"),
 	GEN2("com.misanthropy.fastjei.gen2.Gen2Support"),
 	GEN3("com.misanthropy.fastjei.gen3.Gen3Support"),
+	GEN4("com.misanthropy.fastjei.gen3.Gen3Support"),
 	UNSUPPORTED(null);
 
 	private static final Logger LOGGER = LogManager.getLogger("FastJEI");
@@ -16,6 +17,7 @@ public enum JeiGeneration {
 	private static final int[] GEN1_MIN = {15, 20, 0, 113};
 	private static final int[] GEN2_MIN = {15, 24, 0, 150};
 	private static final int[] GEN3_MIN = {15, 48, 0, 179};
+	private static final int[] GEN4_MIN = {15, 70, 0, 221};
 
 	private static final int[] LAZY_LAYOUT_MAX_EXCLUSIVE = {15, 24, 0, 150};
 
@@ -71,6 +73,9 @@ public enum JeiGeneration {
 			return UNSUPPORTED;
 		}
 		int[] parsed = parse(version);
+		if (compare(parsed, GEN4_MIN) >= 0) {
+			return GEN4;
+		}
 		if (compare(parsed, GEN3_MIN) >= 0) {
 			return GEN3;
 		}

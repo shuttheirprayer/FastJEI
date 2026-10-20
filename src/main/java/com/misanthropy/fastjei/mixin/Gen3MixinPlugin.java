@@ -14,6 +14,12 @@ public final class Gen3MixinPlugin extends GenerationMixinPlugin {
 	}
 
 	@Override
+	protected boolean appliesTo(JeiGeneration detected, String mixinClassName) {
+		return detected == JeiGeneration.GEN3
+				|| detected == JeiGeneration.GEN4 && !mixinClassName.equals(PACKAGE + "ElementSearchMixin");
+	}
+
+	@Override
 	protected Map<String, RequiredMethod> requiredMethods() {
 		return Map.of(
 				PACKAGE + "AnvilRecipeMixins$SkipGeneratedEnchantments",

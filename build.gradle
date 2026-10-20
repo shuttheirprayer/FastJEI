@@ -68,7 +68,7 @@ minecraft {
     }
 }
 
-def jeiGenerations = [gen1: jei_gen1_version, gen2: jei_gen2_version, gen3: jei_gen3_version]
+def jeiGenerations = [gen1: jei_gen1_version, gen2: jei_gen2_version, gen3: jei_gen3_version, gen4: jei_gen4_version]
 
 sourceSets {
     jeiGenerations.keySet().each { name -> maybeCreate(name) }
@@ -78,6 +78,10 @@ jeiGenerations.keySet().each { name ->
     sourceSets.named(name) {
         compileClasspath += sourceSets.main.compileClasspath + sourceSets.main.output
     }
+}
+
+sourceSets.named('gen4') {
+    compileClasspath += sourceSets.gen3.output
 }
 
 mixin {
@@ -93,6 +97,14 @@ mixin {
 // map, so it writes no refmap at all, and an up-to-date compile can drop one that an
 // earlier run did write. Either way the mixin config still names the file. Guarantee an
 // empty one exists so every build produces the same jar.
+jeiGenerations.keySet().each { name ->
+    tasks.named("compile${name.capitalize()}Java", JavaCompile).configure {
+        outputs.file(new File(temporaryDir, "${mod_id}.${name}.refmap.json")).optional()
+    }
+}
+
+def emptyRefmapDir = layout.buildDirectory.dir('emptyRefmaps')
+
 def ensureGenerationRefmaps = tasks.register('ensureGenerationRefmaps') {
     outputs.upToDateWhen { false }
     jeiGenerations.keySet().each { name ->
@@ -101,8 +113,10 @@ def ensureGenerationRefmaps = tasks.register('ensureGenerationRefmaps') {
     doLast {
         jeiGenerations.keySet().each { name ->
             def dir = tasks.named("compile${name.capitalize()}Java", JavaCompile).get().temporaryDir
-            def refmap = new File(dir, "${mod_id}.${name}.refmap.json")
-            if (!refmap.exists()) {
+            def fileName = "${mod_id}.${name}.refmap.json"
+            def refmap = emptyRefmapDir.get().file(fileName).asFile
+            refmap.delete()
+            if (!new File(dir, fileName).exists()) {
                 refmap.parentFile.mkdirs()
                 refmap.text = '{"mappings":{},"data":{}}'
                 logger.lifecycle("Wrote an empty ${refmap.name}: this variant has nothing to remap")
@@ -120,6 +134,9 @@ def ensureGenerationRefmaps = tasks.register('ensureGenerationRefmaps') {
             dependsOn compileTask
             from sourceSets.named(name).get().output
             from(compileTask.map { it.temporaryDir }) {
+                include "${mod_id}.${name}.refmap.json"
+            }
+            from(emptyRefmapDir) {
                 include "${mod_id}.${name}.refmap.json"
             }
         }
@@ -164,6 +181,7 @@ dependencies {
 
     gen1CompileOnly "mezz.jei:jei-1.20.1-forge:${jei_gen1_version}"
     gen2CompileOnly "mezz.jei:jei-1.20.1-forge:${jei_gen2_version}"
+    gen4CompileOnly("mezz.jei:jei-1.20.1-forge:${jei_gen4_version}") { transitive = false }
 
     jeiGenerations.keySet().each { name ->
         add("${name}CompileOnly", "io.github.llamalad7:mixinextras-common:0.5.4")

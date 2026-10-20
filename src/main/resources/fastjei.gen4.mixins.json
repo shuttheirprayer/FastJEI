@@ -1,0 +1,16 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.misanthropy.fastjei.gen4.mixin",
+  "plugin": "com.misanthropy.fastjei.mixin.Gen4MixinPlugin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "fastjei.gen4.refmap.json",
+  "mixins": [],
+  "client": [
+    "ElementPrefixParserAccessor",
+    "ElementSearchMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

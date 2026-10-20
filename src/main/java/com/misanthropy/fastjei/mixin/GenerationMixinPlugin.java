@@ -32,6 +32,10 @@ public abstract class GenerationMixinPlugin implements IMixinConfigPlugin {
 
 	protected abstract JeiGeneration generation();
 
+	protected boolean appliesTo(JeiGeneration detected, String mixinClassName) {
+		return detected == generation();
+	}
+
 	protected Map<String, RequiredMethod> requiredMethods() {
 		return Map.of();
 	}
@@ -51,7 +55,7 @@ public abstract class GenerationMixinPlugin implements IMixinConfigPlugin {
 
 	@Override
 	public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
-		if (JeiGeneration.detect() != generation()) {
+		if (!appliesTo(JeiGeneration.detect(), mixinClassName)) {
 			return false;
 		}
 		String configKey = configGates().get(mixinClassName);
