@@ -86,6 +86,7 @@ sourceSets.named('gen4') {
 
 mixin {
     add sourceSets.main, "${mod_id}.refmap.json"
+    config "${mod_id}.mixins.json"
 
     jeiGenerations.keySet().each { name ->
         add sourceSets.named(name).get(), "${mod_id}.${name}.refmap.json"

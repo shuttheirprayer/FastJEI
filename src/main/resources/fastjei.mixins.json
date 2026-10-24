@@ -1,0 +1,13 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "com.misanthropy.fastjei.common.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [],
+  "client": [
+    "ItemStackBatchRendererCacheMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

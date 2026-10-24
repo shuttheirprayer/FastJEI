@@ -1,6 +1,8 @@
 package com.misanthropy.fastjei;
 
 import com.mojang.logging.LogUtils;
+import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
+import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
@@ -16,6 +18,8 @@ public class Fastjei {
 
 	public static volatile boolean concurrentSafetySetsInstalled = false;
 
+	public static volatile int resourceGeneration;
+
 	public Fastjei(FMLJavaModLoadingContext context) {
 		context.registerConfig(ModConfig.Type.CLIENT, FastJeiConfig.SPEC);
 
@@ -23,6 +27,9 @@ public class Fastjei {
 			LOGGER.info("[FastJEI] Loaded on client - JEI optimizations active");
 			context.getModEventBus().addListener((FMLClientSetupEvent event) ->
 					event.enqueueWork(Fastjei::setupJeiPatches)
+			);
+			context.getModEventBus().addListener((RegisterClientReloadListenersEvent event) ->
+					event.registerReloadListener((ResourceManagerReloadListener) resourceManager -> resourceGeneration++)
 			);
 		} else {
 			LOGGER.info("[FastJEI] Loaded on dedicated server - nothing to do (client-only mod)");
