@@ -1,5 +1,8 @@
 package com.misanthropy.fastjei;
 
+import java.util.List;
+import java.util.Set;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -99,6 +102,19 @@ public final class FastJeiConfig {
 					"Turn this off if brewing recipes look wrong or are missing.")
 			.define("indexedBrewingLookup", true);
 
+	private static final ForgeConfigSpec.BooleanValue ASYNC_JEI_START = BUILDER
+			.comment(
+					"Load JEI on a background thread after joining a world instead of freezing",
+					"the game until it is done. You can move and play right away; the JEI",
+					"overlay shows up once loading finishes. Only the final hand-off and the",
+					"plugins listed in renderThreadPlugins run on the main thread.",
+					"Only used on JEI 15.70.0.221 and newer.")
+			.define("asyncStart", true);
+
+	private static final ForgeConfigSpec.ConfigValue<List<? extends String>> RENDER_THREAD_PLUGINS = BUILDER
+			.comment("JEI plugin ids that are always called on the main thread during a background start.")
+			.defineListAllowEmpty(List.of("renderThreadPlugins"), () -> List.of("kubejs:jei"), o -> o instanceof String);
+
 	private static final ForgeConfigSpec.BooleanValue LOG_TIMINGS = BUILDER
 			.comment("Log how long each FastJEI-accelerated phase took.")
 			.define("logTimings", true);
@@ -116,6 +132,8 @@ public final class FastJeiConfig {
 	public static volatile boolean SKIP_REDUNDANT_MENU_UPDATES = true;
 	public static volatile boolean INDEXED_BREWING_LOOKUP = true;
 	public static volatile boolean TIMINGS = true;
+	public static volatile boolean ASYNC_START = true;
+	private static volatile Set<String> renderThreadPlugins = Set.of("kubejs:jei");
 
 	@SubscribeEvent
 	static void onConfigLoad(final ModConfigEvent event) {
@@ -133,6 +151,12 @@ public final class FastJeiConfig {
 		SKIP_REDUNDANT_MENU_UPDATES = SKIP_REDUNDANT_MENU_UPDATE.get();
 		INDEXED_BREWING_LOOKUP = INDEXED_BREWING.get();
 		TIMINGS = LOG_TIMINGS.get();
+		ASYNC_START = ASYNC_JEI_START.get();
+		renderThreadPlugins = Set.copyOf(RENDER_THREAD_PLUGINS.get());
+	}
+
+	public static boolean isRenderThreadPlugin(ResourceLocation uid) {
+		return renderThreadPlugins.contains(uid.toString());
 	}
 
 	public static int effectiveWorkers() {

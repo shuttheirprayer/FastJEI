@@ -8,7 +8,10 @@
   "mixins": [],
   "client": [
     "ElementPrefixParserAccessor",
-    "ElementSearchMixin"
+    "ElementSearchMixin",
+    "JeiStarterMixin",
+    "PluginCallerMixin",
+    "ErrorUtilMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -4,6 +4,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.misanthropy.fastjei.FastJeiConfig;
 import com.misanthropy.fastjei.gen3.SearchIndexBuilder;
+import com.misanthropy.fastjei.gen4.AsyncJeiStart;
 import mezz.jei.common.search.PrefixInfo;
 import mezz.jei.common.search.PrefixedSearchable;
 import mezz.jei.gui.ingredients.IListElement;
@@ -83,8 +84,14 @@ public abstract class ElementSearchMixin {
 			for (ElementSearchIndex index : indexes) {
 				prefixInfos.add(((ElementPrefixParserAccessor) this.elementPrefixParser).fastjei$getPrefixInfo(index));
 			}
-			List<PrefixedSearchable<IListElementInfo<?>, IListElement<?>>> searchables =
-					SearchIndexBuilder.build(prefixInfos, infos, infos.size() >= FASTJEI_MIN_PARALLEL_BATCH);
+			boolean parallel = infos.size() >= FASTJEI_MIN_PARALLEL_BATCH;
+			List<List<PrefixedSearchable<IListElementInfo<?>, IListElement<?>>>> built = new ArrayList<>(1);
+			if (AsyncJeiStart.inWorker() && FastJeiConfig.PARALLEL_TOOLTIPS) {
+				AsyncJeiStart.onRenderThread(() -> built.add(SearchIndexBuilder.build(prefixInfos, infos, parallel)));
+			} else {
+				built.add(SearchIndexBuilder.build(prefixInfos, infos, parallel));
+			}
+			List<PrefixedSearchable<IListElementInfo<?>, IListElement<?>>> searchables = built.get(0);
 			for (int i = 0; i < searchables.size(); i++) {
 				this.prefixedSearchables.put(prefixInfos.get(i), searchables.get(i));
 			}
