@@ -40,7 +40,8 @@ public abstract class JeiStarterMixin {
 		if (!FastJeiConfig.ASYNC_START || AsyncJeiStart.inWorker() || AsyncJeiStart.syncFallback()) {
 			return;
 		}
-		if (Minecraft.getInstance().level == null) {
+		Minecraft minecraft = Minecraft.getInstance();
+		if (minecraft.level == null || minecraft.getOverlay() != null) {
 			return;
 		}
 		ci.cancel();

@@ -2,6 +2,7 @@ package com.misanthropy.fastjei.gen3.mixin;
 
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.misanthropy.fastjei.gen3.CachedStack;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
@@ -19,15 +20,15 @@ public abstract class TypedItemStackMixin {
 	protected abstract ItemStack createItemStackUncached();
 
 	@Unique
-	private volatile ItemStack fastjei$stack;
+	private volatile CachedStack fastjei$cached;
 
 	@WrapMethod(method = "getIngredient()Lnet/minecraft/world/item/ItemStack;", require = 0)
 	private ItemStack fastjei$keepStack(Operation<ItemStack> original) {
-		ItemStack stack = fastjei$stack;
-		if (stack == null) {
-			stack = createItemStackUncached();
-			fastjei$stack = stack;
+		CachedStack cached = fastjei$cached;
+		if (cached == null || !cached.untouched()) {
+			cached = CachedStack.of(createItemStackUncached());
+			fastjei$cached = cached;
 		}
-		return stack;
+		return cached.stack();
 	}
 }
